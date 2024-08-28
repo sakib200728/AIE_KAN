@@ -10,45 +10,61 @@ void kan_spline_kernel_core6(
     float learning_rate
 ) {
     // Vectorized input processing using AIE vector operations
-    aie::vector<float, 8> input_vector;
-    aie::vector<float, 8> result_vector;
-    aie::vector<float, 8> error_vector;
-    aie::vector<float, 8> grad_vector;
+    const int vector_size = 8;
+    int i;
 
-    // Ensure the number of knots doesn't exceed the array sizes
-    int effective_knots = std::min(num_knots, sizeof(spline_coefficients_6) / sizeof(spline_coefficients_6[0]));
+    // Process in chunks of vector_size (e.g., 8 elements at a time)
+    for (i = 0; i + vector_size <= num_knots; i += vector_size) {
+        aie::vector<float, vector_size> input_vector = window_readincr_v<vector_size>(in);
+        aie::vector<float, vector_size> result_vector = aie::zeros<float, vector_size>();
+        aie::vector<float, vector_size> error_vector;
+        aie::vector<float, vector_size> grad_vector;
 
-    for (int i = 0; i < effective_knots; i += 8) {
-        // Load input data into vector
-        input_vector = window_readincr_v<8>(in);
-
-        // Initialize result vector to zero
-        result_vector = aie::zeros<float, 8>();
-
-        // Apply the spline transformation using vectorized operations
-        for (int j = 0; j < effective_knots; ++j) {
-            aie::vector<float, 8> coeff_vector = aie::broadcast<float, 8>(spline_coefficients_6[j]);
-            aie::vector<float, 8> knot_vector = aie::broadcast<float, 8>(spline_knots_6[j]);
-
+        for (int j = 0; j < vector_size; ++j) {
+            aie::vector<float, vector_size> coeff_vector = aie::broadcast<float, vector_size>(spline_coefficients_6[i + j]);
+            aie::vector<float, vector_size> knot_vector = aie::broadcast<float, vector_size>(spline_knots_6[i + j]);
             result_vector += coeff_vector * (input_vector - knot_vector);
         }
 
-        // Write the result to the output window
         window_writeincr(out, result_vector);
 
-        // Load target data and calculate error
-        aie::vector<float, 8> target_vector = window_readincr_v<8>(target);
-        error_vector = result_vector - target_vector;
-
-        // Compute gradients
+        // Calculate the error and gradients
+        error_vector = result_vector - window_readincr_v<vector_size>(target);
         grad_vector = 2.0f * error_vector;
 
-        // Update spline coefficients
-        for (int j = 0; j < effective_knots; ++j) {
-            spline_coefficients_6[j] -= learning_rate * grad_vector[j];
+        // Update the spline coefficients
+        for (int j = 0; j < vector_size; ++j) {
+            spline_coefficients_6[i + j] -= learning_rate * grad_vector[j];
         }
 
-        // Output gradients for potential further processing
+        window_writeincr(gradients, grad_vector);
+    }
+
+    // Handle any remaining elements that don't fit into a full vector
+    if (i < num_knots) {
+        int remaining_elements = num_knots - i;
+        aie::vector<float, vector_size> input_vector = window_readincr_v<remaining_elements>(in);
+        aie::vector<float, vector_size> result_vector = aie::zeros<float, vector_size>();
+        aie::vector<float, vector_size> error_vector;
+        aie::vector<float, vector_size> grad_vector;
+
+        for (int j = 0; j < remaining_elements; ++j) {
+            aie::vector<float, vector_size> coeff_vector = aie::broadcast<float, vector_size>(spline_coefficients_6[i + j]);
+            aie::vector<float, vector_size> knot_vector = aie::broadcast<float, vector_size>(spline_knots_6[i + j]);
+            result_vector += coeff_vector * (input_vector - knot_vector);
+        }
+
+        window_writeincr(out, result_vector);
+
+        // Calculate the error and gradients
+        error_vector = result_vector - window_readincr_v<remaining_elements>(target);
+        grad_vector = 2.0f * error_vector;
+
+        // Update the spline coefficients
+        for (int j = 0; j < remaining_elements; ++j) {
+            spline_coefficients_6[i + j] -= learning_rate * grad_vector[j];
+        }
+
         window_writeincr(gradients, grad_vector);
     }
 }
