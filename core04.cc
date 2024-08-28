@@ -15,7 +15,10 @@ void kan_spline_kernel_core4(
     aie::vector<float, 8> error_vector;
     aie::vector<float, 8> grad_vector;
 
-    for (int i = 0; i < num_knots; i += 8) {
+    // Ensure the number of knots doesn't exceed the array sizes
+    int effective_knots = std::min(num_knots, sizeof(spline_coefficients_4) / sizeof(spline_coefficients_4[0]));
+
+    for (int i = 0; i < effective_knots; i += 8) {
         // Load input data into vector
         input_vector = window_readincr_v<8>(in);
 
@@ -23,7 +26,7 @@ void kan_spline_kernel_core4(
         result_vector = aie::zeros<float, 8>();
 
         // Apply the spline transformation using vectorized operations
-        for (int j = 0; j < num_knots; ++j) {
+        for (int j = 0; j < effective_knots; ++j) {
             aie::vector<float, 8> coeff_vector = aie::broadcast<float, 8>(spline_coefficients_4[j]);
             aie::vector<float, 8> knot_vector = aie::broadcast<float, 8>(spline_knots_4[j]);
 
@@ -41,7 +44,7 @@ void kan_spline_kernel_core4(
         grad_vector = 2.0f * error_vector;
 
         // Update spline coefficients
-        for (int j = 0; j < num_knots; ++j) {
+        for (int j = 0; j < effective_knots; ++j) {
             spline_coefficients_4[j] -= learning_rate * grad_vector[j];
         }
 
