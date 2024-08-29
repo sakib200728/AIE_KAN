@@ -1,4 +1,4 @@
-# Install script for directory: /Users/sakibalam/Downloads/LeNet source code
+# Install script for directory: /Users/sakibalam/CLionProjects/AIE_KAN
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Users/sakibalam/Downloads/LeNet source code/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Users/sakibalam/CLionProjects/AIE_KAN/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

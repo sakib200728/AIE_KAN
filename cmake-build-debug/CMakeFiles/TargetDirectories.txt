@@ -1,3 +1,3 @@
-/Users/sakibalam/Downloads/LeNet source code/cmake-build-debug/CMakeFiles/LeNet_source_code.dir
-/Users/sakibalam/Downloads/LeNet source code/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/sakibalam/Downloads/LeNet source code/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/sakibalam/CLionProjects/AIE_KAN/cmake-build-debug/CMakeFiles/LeNet_source_code.dir
+/Users/sakibalam/CLionProjects/AIE_KAN/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/sakibalam/CLionProjects/AIE_KAN/cmake-build-debug/CMakeFiles/rebuild_cache.dir

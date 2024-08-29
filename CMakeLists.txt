@@ -6,23 +6,23 @@ set(CMAKE_CXX_STANDARD 14)
 include_directories(.)
 
 add_executable(LeNet_source_code
-    core01.cc
-    core01.h
-    core01lut.h
-    core02.cc
-    core02.h
-    core02lut.h
-    core03.cc
-    core03.h
-    core03lut.h
-    core04.cc
-    core04.h
-    core04lut.h
-    core05.cc
-    core05.h
-    core05lut.h
-        core06.cc
-        core06.h
-    graph.cpp
-    graph.h
-        core06lut.h)
+        src/core01.cc
+        src/core01.h
+        src/core01lut.h
+        src/core02.cc
+        src/core02.h
+        src/core02lut.h
+        src/core03.cc
+        src/core03.h
+        src/core03lut.h
+        src/core04.cc
+        src/core04.h
+        src/core04lut.h
+        src/core05.cc
+        src/core05.h
+        src/core05lut.h
+        src/core06.cc
+        src/core06.h
+        src/graph.cpp
+        src/graph.h
+        src/core06lut.h)

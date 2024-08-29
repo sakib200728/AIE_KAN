@@ -25,13 +25,6 @@ private:
     kernel core05;
     kernel core06;
 
-    parameter core01lut;
-    parameter core02lut;
-    parameter core03lut;
-    parameter core04lut;
-    parameter core05lut;
-    parameter core06lut;
-
 public:
     input_plio in[4];
     output_plio out[3];
@@ -63,7 +56,7 @@ public:
         source(core05) = "core05.cc";
         source(core06) = "core06.cc";
 
-        // Set kernel locations (example, adjust as needed)
+        // Set kernel locations
         location<kernel>(core01) = tile(8, 0);
         location<kernel>(core02) = tile(8, 1);
         location<kernel>(core03) = tile(8, 2);
@@ -71,7 +64,7 @@ public:
         location<kernel>(core05) = tile(8, 4);
         location<kernel>(core06) = tile(8, 5);
 
-        // Define LUT parameters
+        // Define LUT parameters and connect them to kernels
         core01lut = parameter::array(spline_coefficients_1);
         core02lut = parameter::array(spline_coefficients_2);
         core03lut = parameter::array(spline_coefficients_3);
@@ -79,26 +72,24 @@ public:
         core05lut = parameter::array(spline_coefficients_5);
         core06lut = parameter::array(spline_coefficients_6);
 
+        connect<>(core01lut, core01);
+        connect<>(core02lut, core02);
+        connect<>(core03lut, core03);
+        connect<>(core04lut, core04);
+        connect<>(core05lut, core05);
+        connect<>(core06lut, core06);
+
         // Connect kernels to input/output PLIOs
         connect<>(in[0].out[0], core01.in[0]);
-        connect<>(core01lut, core01);
         connect<>(core01.out[0], core02.in[0]);
-
-        connect<>(in[1].out[0], core03.in[0]);
-        connect<>(core03lut, core03);
-        connect<>(core03.out[0], core04.in[0]);
-
-        connect<>(in[2].out[0], core05.in[0]);
-        connect<>(core05lut, core05);
-        connect<>(core05.out[0], core06.in[0]);
-
-        connect<>(core02lut, core02);
         connect<>(core02.out[0], out[0].in[0]);
 
-        connect<>(core04lut, core04);
+        connect<>(in[1].out[0], core03.in[0]);
+        connect<>(core03.out[0], core04.in[0]);
         connect<>(core04.out[0], out[1].in[0]);
 
-        connect<>(core06lut, core06);
+        connect<>(in[2].out[0], core05.in[0]);
+        connect<>(core05.out[0], core06.in[0]);
         connect<>(core06.out[0], out[2].in[0]);
 
         // Single buffer management
