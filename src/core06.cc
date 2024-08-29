@@ -20,9 +20,11 @@ void kan_spline_kernel_core6(
         aie::vector<float, vector_size> grad_vector;
 
         for (int j = 0; j < vector_size; ++j) {
-            aie::vector<float, vector_size> coeff_vector = aie::broadcast<float, vector_size>(spline_coefficients_6[i + j]);
-            aie::vector<float, vector_size> knot_vector = aie::broadcast<float, vector_size>(spline_knots_6[i + j]);
-            result_vector += coeff_vector * (input_vector - knot_vector);
+            if (i + j < num_knots) {
+                aie::vector<float, vector_size> coeff_vector = aie::broadcast<float, vector_size>(spline_coefficients_6[i + j]);
+                aie::vector<float, vector_size> knot_vector = aie::broadcast<float, vector_size>(spline_knots_6[i + j]);
+                result_vector += coeff_vector * (input_vector - knot_vector);
+            }
         }
 
         // Pruning and sparsification step
@@ -35,12 +37,12 @@ void kan_spline_kernel_core6(
         grad_vector = 2.0f * (error_vector + regularization_strength * result_vector);
 
         for (int j = 0; j < vector_size; ++j) {
-            spline_coefficients_6[i + j] -= learning_rate * grad_vector[j];
+            if (i + j < num_knots) {
+                spline_coefficients_6[i + j] -= learning_rate * grad_vector[j];
+            }
         }
 
         window_writeincr(gradients, grad_vector);
-
-        // Final output adjustments or additional processing can be added here
     }
 
     if (i < num_knots) {
@@ -69,8 +71,6 @@ void kan_spline_kernel_core6(
         }
 
         window_writeincr(gradients, grad_vector);
-
-        // Final output adjustments or additional processing for remaining elements
     }
 }
 
