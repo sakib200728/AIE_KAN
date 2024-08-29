@@ -13,7 +13,7 @@ void kan_spline_kernel_core5(
     const int vector_size = 8;
     int i;
 
-    for (i = 0; i + vector_size <= num_knots; i += vector_size) {
+    for (i = 0; i + vector_size <= num_knots && i + vector_size <= std::min(num_knots, 7); i += vector_size) {
         aie::vector<float, vector_size> input_vector = window_readincr_v<vector_size>(in);
         aie::vector<float, vector_size> result_vector = aie::zeros<float, vector_size>();
         aie::vector<float, vector_size> error_vector;
@@ -38,7 +38,7 @@ void kan_spline_kernel_core5(
 
         for (int j = 0; j < vector_size; ++j) {
             if (i + j < num_knots) {
-                spline_coefficients_5[i + j] -= learning_rate * grad_vector[j];
+                spline_coefficients_5[i + j] -= learning rate * grad_vector[j];
             }
         }
 
@@ -46,8 +46,8 @@ void kan_spline_kernel_core5(
     }
 
     if (i < num_knots) {
-        int remaining_elements = num_knots - i;
-        aie::vector<float, 8> input_vector = window_readincr_v<8>(in);
+        int remaining elements = num_knots - i;
+        aie::vector<float, 8> input vector = window_readincr_v<8>(in);
         aie::vector<float, 8> result_vector = aie::zeros<float, 8>();
         aie::vector<float, 8> error_vector;
         aie::vector<float, 8> grad_vector;
@@ -66,7 +66,7 @@ void kan_spline_kernel_core5(
         error_vector = result_vector - window_readincr_v<8>(target);
         grad_vector = 2.0f * (error_vector + regularization_strength * result_vector);
 
-        for (int j = 0; j < remaining_elements; ++j) {
+        for (int j = 0; j < remaining elements; ++j) {
             spline_coefficients_5[i + j] -= learning_rate * grad_vector[j];
         }
 
@@ -79,7 +79,7 @@ void core05_top(
     input_window<float> &__restrict target,
     output_window<float> &__restrict out,
     output_window<float> &__restrict gradients,
-    float learning_rate,
+    float learning rate,
     float regularization_strength
 ) {
     const int num_knots = sizeof(spline_knots_5) / sizeof(spline_knots_5[0]);
