@@ -18,12 +18,21 @@ using namespace adf;
 
 class myGraph : public graph {
 private:
+    // Kernel declarations
     kernel core01;
     kernel core02;
     kernel core03;
     kernel core04;
     kernel core05;
     kernel core06;
+
+    // Declare LUT parameters
+    parameter core01lut;
+    parameter core02lut;
+    parameter core03lut;
+    parameter core04lut;
+    parameter core05lut;
+    parameter core06lut;
 
 public:
     input_plio in[4];
