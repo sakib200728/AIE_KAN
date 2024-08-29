@@ -14,13 +14,15 @@
 
 #define __AIE_API_TYPES__HPP__
 
+// Function declarations
 void kan_spline_kernel_core2(
     const int num_knots,
     input_window<float> *in,
     input_window<float> *target,
     output_window<float> *out,
     output_window<float> *gradients,
-    float learning_rate
+    float learning_rate,
+    float regularization_strength
 );
 
 void core02_top(
@@ -28,7 +30,8 @@ void core02_top(
     input_window<float> &__restrict target,
     output_window<float> &__restrict out,
     output_window<float> &__restrict gradients,
-    float learning_rate
+    float learning_rate,
+    float regularization_strength
 );
 
 #else
