@@ -13,7 +13,7 @@ void kan_spline_kernel_core6(
     const int vector_size = 8;
     int i;
 
-    for (i = 0; i + vector_size <= num_knots; i += vector_size) {
+    for (i = 0; i + vector_size <= num_knots && i + vector_size <= std::min(num_knots, 6); i += vector_size) {
         aie::vector<float, vector_size> input_vector = window_readincr_v<vector_size>(in);
         aie::vector<float, vector_size> result_vector = aie::zeros<float, vector_size>();
         aie::vector<float, vector_size> error_vector;
@@ -66,7 +66,7 @@ void kan_spline_kernel_core6(
         error_vector = result_vector - window_readincr_v<8>(target);
         grad_vector = 2.0f * (error_vector + regularization_strength * result_vector);
 
-        for (int j = 0; j < remaining_elements; ++j) {
+        for (int j = 0; j < remaining elements; ++j) {
             spline_coefficients_6[i + j] -= learning_rate * grad_vector[j];
         }
 
