@@ -13,7 +13,7 @@ void kan_spline_kernel_core4(
     const int vector_size = 8;
     int i;
 
-    for (i = 0; i + vector_size <= num_knots; i += vector_size) {
+    for (i = 0; i + vector_size <= num_knots && i + vector_size <= std::min(num_knots, 8); i += vector_size) {
         aie::vector<float, vector_size> input_vector = window_readincr_v<vector_size>(in);
         aie::vector<float, vector_size> result_vector = aie::zeros<float, vector_size>();
         aie::vector<float, vector_size> error_vector;
