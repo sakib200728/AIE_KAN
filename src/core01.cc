@@ -1,6 +1,14 @@
 #include "core01.h"
 #include "core01lut.h"
+#include <adf.h>
+#include "aie_api/aie.hpp"
+#include "aie_api/aie_adf.hpp"
 
+// Manual definition of window_readincr if needed
+float window_readincr(input_window<float>* in) {
+    float value = *in->ptr++;
+    return value;
+}
 
 void kan_spline_kernel_core1(
     const int num_knots,
@@ -17,7 +25,7 @@ void kan_spline_kernel_core1(
     for (i = 0; i + vector_size <= num_knots && i + vector_size <= std::min(num_knots, 5); i += vector_size) {
         aie::vector<float, 8> input_vector;
         for(int j = 0; j < 8; ++j) {
-            input_vector[j] = window_readincr(in);  // Reading data manually
+            input_vector[j] = window_readincr(in);  // Using manually defined function
         }
 
         aie::vector<float, 8> result_vector = 0;  // Initialize to zero
@@ -64,7 +72,7 @@ void kan_spline_kernel_core1(
         int remaining_elements = num_knots - i;
         aie::vector<float, 8> input_vector;
         for(int j = 0; j < remaining_elements; ++j) {
-            input_vector[j] = window_readincr(in);  // Reading data manually
+            input_vector[j] = window_readincr(in);  // Using manually defined function
         }
 
         aie::vector<float, 8> result_vector = 0;
