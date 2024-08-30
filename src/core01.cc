@@ -1,6 +1,7 @@
 #include "core01.h"
 #include "core01lut.h"
 
+
 void kan_spline_kernel_core1(
     const int num_knots,
     input_window<float> *in,
@@ -14,7 +15,11 @@ void kan_spline_kernel_core1(
     int i;
 
     for (i = 0; i + vector_size <= num_knots && i + vector_size <= std::min(num_knots, 5); i += vector_size) {
-        aie::vector<float, 8> input_vector = window_readincr_v<8>(in);
+        aie::vector<float, 8> input_vector;
+        for(int j = 0; j < 8; ++j) {
+            input_vector[j] = window_readincr(in);  // Reading data manually
+        }
+
         aie::vector<float, 8> result_vector = 0;  // Initialize to zero
         aie::vector<float, 8> error_vector = 0;
         aie::vector<float, 8> grad_vector = 0;
@@ -40,7 +45,10 @@ void kan_spline_kernel_core1(
 
         window_writeincr(out, result_vector);
 
-        error_vector = result_vector - window_readincr_v<8>(target);
+        for(int j = 0; j < 8; ++j) {
+            error_vector[j] = result_vector[j] - window_readincr(target);  // Read target values manually
+        }
+        
         grad_vector = 2.0f * (error_vector + regularization_strength * result_vector);
 
         for (int j = 0; j < 8; ++j) {
@@ -54,7 +62,11 @@ void kan_spline_kernel_core1(
 
     if (i < num_knots) {
         int remaining_elements = num_knots - i;
-        aie::vector<float, 8> input_vector = window_readincr_v<8>(in);
+        aie::vector<float, 8> input_vector;
+        for(int j = 0; j < remaining_elements; ++j) {
+            input_vector[j] = window_readincr(in);  // Reading data manually
+        }
+
         aie::vector<float, 8> result_vector = 0;
         aie::vector<float, 8> error_vector = 0;
         aie::vector<float, 8> grad_vector = 0;
@@ -77,7 +89,10 @@ void kan_spline_kernel_core1(
 
         window_writeincr(out, result_vector);
 
-        error_vector = result_vector - window_readincr_v<8>(target);
+        for(int j = 0; j < remaining_elements; ++j) {
+            error_vector[j] = result_vector[j] - window_readincr(target);  // Read target values manually
+        }
+        
         grad_vector = 2.0f * (error_vector + regularization_strength * result_vector);
 
         for (int j = 0; j < remaining_elements; ++j) {
