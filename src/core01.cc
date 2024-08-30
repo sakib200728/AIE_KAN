@@ -1,14 +1,5 @@
 #include "core01.h"
 #include "core01lut.h"
-#include <adf.h>
-#include "aie_api/aie.hpp"
-#include "aie_api/aie_adf.hpp"
-
-// Manual definition of window_readincr if needed
-float window_readincr(input_window<float>* in) {
-    float value = *in->ptr++;
-    return value;
-}
 
 void kan_spline_kernel_core1(
     const int num_knots,
@@ -23,26 +14,15 @@ void kan_spline_kernel_core1(
     int i;
 
     for (i = 0; i + vector_size <= num_knots && i + vector_size <= std::min(num_knots, 5); i += vector_size) {
-        aie::vector<float, 8> input_vector;
-        for(int j = 0; j < 8; ++j) {
-            input_vector[j] = window_readincr(in);  // Using manually defined function
-        }
-
-        aie::vector<float, 8> result_vector = 0;  // Initialize to zero
-        aie::vector<float, 8> error_vector = 0;
-        aie::vector<float, 8> grad_vector = 0;
+        aie::vector<float, 8> input_vector = window_readincr_v<8>(in);
+        aie::vector<float, 8> result_vector = aie::zeros<float, 8>();
+        aie::vector<float, 8> error_vector;
+        aie::vector<float, 8> grad_vector;
 
         for (int j = 0; j < 8; ++j) {
             if (i + j < num_knots) {
-                aie::vector<float, 8> coeff_vector;
-                aie::vector<float, 8> knot_vector;
-
-                // Manually broadcasting values
-                for (int k = 0; k < 8; ++k) {
-                    coeff_vector[k] = spline_coefficients_1[i + j];
-                    knot_vector[k] = spline_knots_1[i + j];
-                }
-
+                aie::vector<float, 8> coeff_vector = aie::broadcast<float, 8>(spline_coefficients_1[i + j]);
+                aie::vector<float, 8> knot_vector = aie::broadcast<float, 8>(spline_knots_1[i + j]);
                 result_vector += coeff_vector * (input_vector - knot_vector);
             }
         }
@@ -53,10 +33,7 @@ void kan_spline_kernel_core1(
 
         window_writeincr(out, result_vector);
 
-        for(int j = 0; j < 8; ++j) {
-            error_vector[j] = result_vector[j] - window_readincr(target);  // Read target values manually
-        }
-        
+        error_vector = result_vector - window_readincr_v<8>(target);
         grad_vector = 2.0f * (error_vector + regularization_strength * result_vector);
 
         for (int j = 0; j < 8; ++j) {
@@ -70,25 +47,14 @@ void kan_spline_kernel_core1(
 
     if (i < num_knots) {
         int remaining_elements = num_knots - i;
-        aie::vector<float, 8> input_vector;
-        for(int j = 0; j < remaining_elements; ++j) {
-            input_vector[j] = window_readincr(in);  // Using manually defined function
-        }
-
-        aie::vector<float, 8> result_vector = 0;
-        aie::vector<float, 8> error_vector = 0;
-        aie::vector<float, 8> grad_vector = 0;
+        aie::vector<float, 8> input_vector = window_readincr_v<8>(in);
+        aie::vector<float, 8> result_vector = aie::zeros<float, 8>();
+        aie::vector<float, 8> error_vector;
+        aie::vector<float, 8> grad_vector;
 
         for (int j = 0; j < remaining_elements; ++j) {
-            aie::vector<float, 8> coeff_vector;
-            aie::vector<float, 8> knot_vector;
-
-            // Manually broadcasting values
-            for (int k = 0; k < 8; ++k) {
-                coeff_vector[k] = spline_coefficients_1[i + j];
-                knot_vector[k] = spline_knots_1[i + j];
-            }
-
+            aie::vector<float, 8> coeff_vector = aie::broadcast<float, 8>(spline_coefficients_1[i + j]);
+            aie::vector<float, 8> knot_vector = aie::broadcast<float, 8>(spline_knots_1[i + j]);
             result_vector[j] += coeff_vector[j] * (input_vector[j] - knot_vector[j]);
         }
 
@@ -97,10 +63,7 @@ void kan_spline_kernel_core1(
 
         window_writeincr(out, result_vector);
 
-        for(int j = 0; j < remaining_elements; ++j) {
-            error_vector[j] = result_vector[j] - window_readincr(target);  // Read target values manually
-        }
-        
+        error_vector = result_vector - window_readincr_v<8>(target);
         grad_vector = 2.0f * (error_vector + regularization_strength * result_vector);
 
         for (int j = 0; j < remaining_elements; ++j) {
