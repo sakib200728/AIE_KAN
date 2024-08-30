@@ -1,5 +1,7 @@
 #include "core01.h"
 #include "core01lut.h"
+#include <aie_api/aie.hpp>
+#include <aie_api/aie_adf.hpp>
 
 void kan_spline_kernel_core1(
     const int num_knots,
@@ -12,6 +14,9 @@ void kan_spline_kernel_core1(
 ) {
     const int vector_size = 8;
     int i;
+
+    float* out_ptr = out->ptr;  // Pointer to the output buffer
+    float* grad_ptr = gradients->ptr;  // Pointer to the gradients buffer
 
     for (i = 0; i + vector_size <= num_knots && i + vector_size <= std::min(num_knots, 5); i += vector_size) {
         aie::vector<float, 8> input_vector = window_readincr_v<8>(in);
@@ -31,7 +36,9 @@ void kan_spline_kernel_core1(
         float pruning_threshold = 0.1f;  // Example threshold value for pruning
         result_vector = select(result_vector > pruning_threshold, result_vector, 0.0f);
 
-        window_writeincr(out, result_vector);
+        // Store the result vector using aie::store_v
+        aie::store_v(out_ptr, result_vector);
+        out_ptr += vector_size;  // Increment pointer by vector size
 
         error_vector = result_vector - window_readincr_v<8>(target);
         grad_vector = 2.0f * (error_vector + regularization_strength * result_vector);
@@ -42,7 +49,9 @@ void kan_spline_kernel_core1(
             }
         }
 
-        window_writeincr(gradients, grad_vector);
+        // Store the gradient vector using aie::store_v
+        aie::store_v(grad_ptr, grad_vector);
+        grad_ptr += vector_size;  // Increment pointer by vector size
     }
 
     if (i < num_knots) {
@@ -61,7 +70,9 @@ void kan_spline_kernel_core1(
         // Pruning and sparsification step for remaining elements
         result_vector = select(result_vector > pruning_threshold, result_vector, 0.0f);
 
-        window_writeincr(out, result_vector);
+        // Store the result vector using aie::store_v
+        aie::store_v(out_ptr, result_vector);
+        out_ptr += remaining_elements;  // Increment pointer by remaining elements
 
         error_vector = result_vector - window_readincr_v<8>(target);
         grad_vector = 2.0f * (error_vector + regularization_strength * result_vector);
@@ -70,7 +81,9 @@ void kan_spline_kernel_core1(
             spline_coefficients_1[i + j] -= learning_rate * grad_vector[j];
         }
 
-        window_writeincr(gradients, grad_vector);
+        // Store the gradient vector using aie::store_v
+        aie::store_v(grad_ptr, grad_vector);
+        grad_ptr += remaining_elements;  // Increment pointer by remaining elements
     }
 }
 
